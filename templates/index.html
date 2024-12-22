@@ -1,0 +1,28 @@
+{% extends "header.html" %}
+
+{% block pageContent %}
+
+<div class="main-panel">
+    <div class="content-wrapper">
+        <div class="image-container">
+            <!-- Provide the correct static path -->
+            <img src="/static/images/other/logo.jpg" alt="Centered Image">
+        </div>
+    </div>
+</div>
+
+<style>
+    .image-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 60vh; /* Adjust the height as per your requirement */
+    }
+
+    .image-container img {
+        max-width: 30%;
+        height: auto;
+    }
+</style>
+
+{% endblock pageContent %}

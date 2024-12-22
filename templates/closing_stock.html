@@ -1,0 +1,278 @@
+{% extends "header.html" %}
+
+{% block pageContent %}
+
+<div class="main-panel">
+    <div class="content-wrapper">
+
+
+        <!-- Cards Section -->
+        <div class="card-section">
+            <div class="card" onclick="showContent('data-entry')">
+                <h4>Enter Closing Stock Data</h4>
+            </div>
+            <div class="card" onclick="showContent('view-reports')">
+                <h4>View Closing Stock Reports</h4>
+            </div>
+        </div>
+
+        <!-- Data Entry Section -->
+        <div id="data-entry" class="content-section" style="display: none;">
+            <h1>Closing Stock Report - Data Entry</h1>
+            <br>
+            <form method="POST">
+                {% csrf_token %}
+                <!-- Date and Day Selection -->
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required>
+                <label for="day">Day:</label>
+                <select id="day" name="day" required>
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                </select>
+                <br>
+                <hr>
+                <!-- Table for Bird Types -->
+                <div class="table-responsive">
+                    <table border="1">
+                        <thead>
+                            <tr>
+                                <th>S.NO</th>
+                                <th>Birds Type</th>
+                                <th>Number of Birds</th>
+                                <th>Number of Kgs</th>
+                                <th>Mortality</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>Broiler</td>
+                                <td><input type="number" name="broiler_no_of_birds" min="0"></td>
+                                <td><input type="number" name="broiler_no_of_kgs" step="0.01" min="0"></td>
+                                <td><input type="number" name="broiler_mortality" min="0"></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>CC</td>
+                                <td><input type="number" name="cc_no_of_birds" min="0"></td>
+                                <td><input type="number" name="cc_no_of_kgs" step="0.01" min="0"></td>
+                                <td><input type="number" name="cc_mortality" min="0"></td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Original</td>
+                                <td><input type="number" name="original_no_of_birds" min="0"></td>
+                                <td><input type="number" name="original_no_of_kgs" step="0.01" min="0"></td>
+                                <td><input type="number" name="original_mortality" min="0"></td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td>Quail</td>
+                                <td><input type="number" name="quail_no_of_birds" min="0"></td>
+                                <td><input type="number" name="quail_no_of_kgs" step="0.01" min="0"></td>
+                                <td><input type="number" name="quail_mortality" min="0"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <br>
+                <button type="submit">Save</button>
+            </form>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="view-reports" class="content-section" style="display: none;">
+            <h1>Closing Stock Reports</h1>
+            <br>
+            <form method="GET" action="{% url 'closing_stock' %}">
+                <input type="date" class="form-control" name="date_filter" style="border: 1px solid blue;" value="{% if date_filter %}{{ date_filter }}{% endif %}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="start_date">From:</label>
+                        <input type="date" class="form-control" style="border: 1px solid blue;" id="start_date" name="start_date" value="{% if start_date %}{{ start_date }}{% endif %}">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="end_date">To:</label>
+                        <input type="date" class="form-control" style="border: 1px solid blue;" id="end_date" name="end_date" value="{% if end_date %}{{ end_date }}{% endif %}">
+                    </div>
+                </div>
+                <br>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+            <br>
+            <a href="{% url 'download_excel_closingstock' %}?{% if date_filter %}date_filter={{ date_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn btn-success">Download Excel</a>
+            <br><br>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>S.NO</th>
+                        <th>Date</th>
+                        <th>Day</th>
+                        <th>View</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in stocks %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ stock.date }}</td>
+                        <td>{{ stock.day }}</td>
+                        <td>
+                            <form action="{% url 'view_stock' stock.date %}" method="get">
+                                <button type="submit">View</button>
+                            </form>
+                        </td>
+                        <td>
+                            <form action="{% url 'closing_stock' %}" method="post" onsubmit="return confirmDelete();">
+                                {% csrf_token %}
+                                <input type="hidden" name="report_date" value="{{ stock.date|date:"Y-m-d" }}">
+                                <button type="submit" name="delete" class="btn btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    h1 {
+        font-family: 'Georgia', serif;
+        font-size: 1.5em;
+        color: red;
+        text-align: center;
+        border-bottom: 2px solid #d0d0d0;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-section {
+        display: flex;
+        justify-content: space-around;
+        padding: 20px;
+    }
+
+    .card {
+        background: linear-gradient(135deg, #6b5b95, #c9d6ff);
+        color: white;
+        border-radius: 10px;
+        width: 250px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s, box-shadow 0.3s;
+        cursor: pointer;
+    }
+
+    .card h4 {
+        margin: 0;
+        font-size: 18px;
+    }
+
+    .card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .card:active {
+        transform: scale(0.95);
+    }
+
+    .card-content {
+        display: none;
+    }
+
+    .card-content.active {
+        display: block;
+    }
+
+    .content-section {
+        display: none;
+    }
+
+    .report-section {
+        width: 90%;
+        /* Adjust this percentage as needed */
+        margin: 0 auto;
+        /* Center the section */
+    }
+
+    table {
+        width: 80%;
+        /* Make sure the table takes up the full width of the container */
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th,
+    td {
+        padding: 8px;
+        text-align: center;
+        border: 1px solid black;
+    }
+
+    input[type="number"] {
+        width: 100px;
+        /* Set a consistent width for input fields */
+        text-align: right;
+        /* Align text to the right for numeric fields */
+        padding: 5px;
+    }
+</style>
+
+<script>
+    function showContent(section) {
+        // Hide all sections
+        document.getElementById('data-entry').style.display = 'none';
+        document.getElementById('view-reports').style.display = 'none';
+
+        // Show the selected section
+        document.getElementById(section).style.display = 'block';
+    }
+
+    // Handle form submission with AJAX
+    document.getElementById('filter-form').addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent form from submitting traditionally
+
+        const formData = new FormData(this);
+
+        // Send an AJAX request
+        fetch("{% url 'closing_stock' %}", {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: formData
+        })
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('reports-table').innerHTML = data; // Update the reports table
+        });
+    });
+</script>
+
+<script>
+    function confirmDelete() {
+        return confirm("Are you sure you want to delete the sales records for this date?");
+    }
+</script>
+
+
+
+{% endblock pageContent %}
